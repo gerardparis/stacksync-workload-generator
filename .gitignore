@@ -12,3 +12,4 @@
 hs_err_pid*
 
 target/*
+stacksync-server.log
