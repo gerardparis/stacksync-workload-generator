@@ -145,7 +145,8 @@ public class ClientDummyThreads extends Thread {
 
 	ItemMetadata itemMetadata = new ItemMetadata(id, version, deviceId, parentId, parentVersion, status, modifiedAt, checksum, size, isFolder, filename, mimetype, chunks);
 	itemMetadata.setChunks(chunks);
-	itemMetadata.setTempId((long) ran.nextLong());
+	//itemMetadata.setTempId((long) ran.nextLong());
+	itemMetadata.setId(ran.nextLong());
 
 	return itemMetadata;
     }
