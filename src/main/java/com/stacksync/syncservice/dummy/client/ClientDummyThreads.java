@@ -8,7 +8,7 @@ package com.stacksync.syncservice.dummy.client;
 import com.stacksync.commons.models.ItemMetadata;
 import com.stacksync.commons.omq.ISyncService;
 import com.stacksync.commons.requests.CommitRequest;
-import static com.stacksync.syncservice.dummy.client.ClientDummy.CHUNK_SIZE;
+import static com.stacksync.syncservice.dummy.client.WorkloadGenerator.CHUNK_SIZE;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -31,12 +31,6 @@ public class ClientDummyThreads extends Thread {
     private ISyncService syncService;
     protected final Logger logger;
 
-    /*public ClientDummyThreads(int commitsPerSecond, int minutes, ISyncService[] shardProxies, Logger logger) {
-     this.commitsPerSecond = commitsPerSecond;
-     this.minutes = minutes;
-     this.shardProxies = shardProxies;
-     this.logger = logger;
-     }*/
     public ClientDummyThreads(int totalCommits, UUID[] users, ISyncService syncService, Logger logger) {
 	this.totalCommits = totalCommits;
 	this.usersId = users;
@@ -44,54 +38,11 @@ public class ClientDummyThreads extends Thread {
 	this.logger = logger;
     }
 
-    /*@Override
-     public void run() {
-     Random ran = new Random(System.currentTimeMillis());
-
-     // Distance between commits in msecs
-     long distance = (long) (1000 / commitsPerSecond);
-
-     // Every iteration takes a minute
-     for (int i = 0; i < minutes; i++) {
-
-     long startMinute = System.currentTimeMillis();
-     for (int j = 0; j < commitsPerSecond * 60; j++) {
-     String id = UUID.randomUUID().toString();
-
-     long start = System.currentTimeMillis();
-     doCommit(shardProxies[ran.nextInt(shardProxies.length)], ran,
-     1, 8);
-     long end = System.currentTimeMillis();
-
-     // If doCommit had no cost sleep would be distance but we have
-     // to take into account of the time that it takes
-     long sleep = distance - (end - start);
-     if (sleep > 0) {
-     try {
-     Thread.sleep(sleep);
-     } catch (InterruptedException e) {
-     e.printStackTrace();
-     }
-     }
-     }
-     long endMinute = System.currentTimeMillis();
-     long minute = endMinute - startMinute;
-
-     // I will forgive 5 seconds of delay...
-     if (minute > 65 * 1000) {
-     // Notify error
-     logger.error("MORE THAN 65 SECONDS=" + (minute / 1000));
-     }
-     }
-
-     }*/
     @Override
     public void run() {
 	Random ran = new Random(System.currentTimeMillis());
 
 	for (int j = 0; j < totalCommits; j++) {
-	    String id = UUID.randomUUID().toString();
-
 	    doCommit(usersId[ran.nextInt(usersId.length)], ran, 1, 8);
 	}
 
