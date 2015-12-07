@@ -53,7 +53,7 @@ public class WorkloadGenerator {
              broker.bind(clientId.toString(), workspaces[i]);*/
             env.setProperty(ParameterQueue.RPC_EXCHANGE, syncServerExchange);
         }
-        //this.pressAnyKeyToContinue();
+        this.pressAnyKeyToContinue();
     }
 
     public void startExperiment(int numThreads, int numUsers, int commitsPerThread) {
