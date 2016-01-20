@@ -43,8 +43,7 @@ public class WorkloadGenerator {
             Properties env = broker.getEnvironment();
             String syncServerExchange = env.getProperty(ParameterQueue.RPC_EXCHANGE, "rpc_global_exchange");
 
-            UUID clientId = UUID.randomUUID();
-            syncService.createUser(clientId);
+            UUID clientId = syncService.createRandomUser();
             usersId[i] = clientId;
 
             env.setProperty(ParameterQueue.RPC_EXCHANGE, "rpc_return_exchange");
