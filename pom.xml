@@ -152,7 +152,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>com.stacksync.syncservice.SyncServiceDaemon</mainClass>
+                            <mainClass>com.stacksync.syncservice.dummy.client.WorkloadGenerator</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

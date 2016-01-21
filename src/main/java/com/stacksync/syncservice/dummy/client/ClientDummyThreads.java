@@ -28,12 +28,16 @@ public class ClientDummyThreads extends Thread {
 
     private int totalCommits;//commitsPerSecond, minutes;
     private UUID[] usersId;
+    private UUID[] workspacesId;
+    private UUID[] devicesId;
     private ISyncService syncService;
     protected final Logger logger;
 
-    public ClientDummyThreads(int totalCommits, UUID[] users, ISyncService syncService, Logger logger) {
+    public ClientDummyThreads(int totalCommits, UUID[] users, UUID[] workspaces, UUID[] devices, ISyncService syncService, Logger logger) {
 	this.totalCommits = totalCommits;
 	this.usersId = users;
+        this.workspacesId = workspaces;
+        this.devicesId = devices;
 	this.syncService = syncService;
 	this.logger = logger;
     }
@@ -43,19 +47,21 @@ public class ClientDummyThreads extends Thread {
 	Random ran = new Random(System.currentTimeMillis());
 
 	for (int j = 0; j < totalCommits; j++) {
-	    doCommit(usersId[ran.nextInt(usersId.length)], ran, 1, 8);
+            int randomPos = ran.nextInt(usersId.length);
+            
+	    doCommit(usersId[randomPos], workspacesId[randomPos], devicesId[randomPos], ran, 1, 8);
 	}
 
     }
 
-    public void doCommit(UUID userId, Random ran, int min, int max) {
+    public void doCommit(UUID userId, UUID workspaceId, UUID deviceId, Random ran, int min, int max) {
 	
 	// Create a ItemMetadata List
 	List<ItemMetadata> items = new ArrayList<ItemMetadata>();
 	items.add(createItemMetadata(ran, min, max, userId));
 
 	// Create a CommitRequest
-	CommitRequest commitRequest = new CommitRequest(userId, userId, userId, items);
+	CommitRequest commitRequest = new CommitRequest(userId, workspaceId, deviceId, items);
 
 	logger.info("RequestID=" + commitRequest.getRequestId());
 	syncService.commit(commitRequest);

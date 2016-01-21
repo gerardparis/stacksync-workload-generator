@@ -5,6 +5,7 @@
  */
 package com.stacksync.syncservice.dummy.client;
 
+import com.stacksync.commons.models.User;
 import com.stacksync.commons.omq.ISyncService;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,6 +30,8 @@ public class WorkloadGenerator {
     protected static final int CHUNK_SIZE = 512 * 1024;
     private ISyncService syncService;
     private UUID[] usersId;
+    private UUID[] workspacesId;
+    private UUID[] devicesId;
     private Broker broker;
     private ClientDummyThreads[] threads;
 
@@ -37,15 +40,19 @@ public class WorkloadGenerator {
         this.broker = broker;
 
         usersId = new UUID[numUsers];
-
+        workspacesId = new UUID[numUsers];
+        devicesId = new UUID[numUsers];
+        
         syncService = broker.lookup(ISyncService.class.getSimpleName(), ISyncService.class);
         for (int i = 0; i < numUsers; i++) {
             Properties env = broker.getEnvironment();
             String syncServerExchange = env.getProperty(ParameterQueue.RPC_EXCHANGE, "rpc_global_exchange");
 
-            UUID clientId = syncService.createRandomUser();
-            usersId[i] = clientId;
-
+            UUID[] client = syncService.createRandomUser();
+            usersId[i] = client[0];
+            workspacesId[i] = client[1];
+            devicesId[i] =  client[2];
+            
             env.setProperty(ParameterQueue.RPC_EXCHANGE, "rpc_return_exchange");
 
             /*workspaces[i] = new WorkspaceImpl();
@@ -60,7 +67,7 @@ public class WorkloadGenerator {
         threads = new ClientDummyThreads[numThreads];
 
         for (int i = 0; i < threads.length; i++) {
-            threads[i] = new ClientDummyThreads(commitsPerThread, usersId, syncService, logger);
+            threads[i] = new ClientDummyThreads(commitsPerThread, usersId, workspacesId, devicesId, syncService, logger);
             threads[i].start();
         }
 
@@ -107,7 +114,7 @@ public class WorkloadGenerator {
         int numThreads = Integer.parseInt(args[0]);
         int numUsers = Integer.parseInt(args[1]);
         int totalCommits = Integer.parseInt(args[2]);
-        Config.loadProperties("config.properties");
+        Config.loadProperties("../config.properties");
         Broker broker = new Broker(Config.getProperties());
 
         WorkloadGenerator client = new WorkloadGenerator(broker, numUsers);
