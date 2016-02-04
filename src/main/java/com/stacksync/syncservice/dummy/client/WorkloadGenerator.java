@@ -43,7 +43,7 @@ public class WorkloadGenerator {
         workspacesId = new UUID[numUsers];
         devicesId = new UUID[numUsers];
         
-        syncService = broker.lookup(ISyncService.class.getSimpleName(), ISyncService.class);
+        syncService = broker.lookup(Config.getProperties().getProperty("omq.queueName")+0, ISyncService.class);
         for (int i = 0; i < numUsers; i++) {
             Properties env = broker.getEnvironment();
             String syncServerExchange = env.getProperty(ParameterQueue.RPC_EXCHANGE, "rpc_global_exchange");
@@ -62,12 +62,40 @@ public class WorkloadGenerator {
         this.pressAnyKeyToContinue();
     }
 
-    public void startExperiment(int numThreads, int numUsers, int commitsPerThread) {
+    public void startExperiment(int numThreads, int numUsers, int commitsPerThread) throws RemoteException {
 
         threads = new ClientDummyThreads[numThreads];
 
+        int assignedUsers = 0;
+        
         for (int i = 0; i < threads.length; i++) {
-            threads[i] = new ClientDummyThreads(commitsPerThread, usersId, workspacesId, devicesId, syncService, logger);
+            
+            System.out.println(Config.getProperties().getProperty("omq.queueName")+Integer.toString(i));
+            
+            UUID[] threadUsersId;
+            UUID[] threadWorkspaceId;
+            UUID[] threadDevicesId;
+            
+            if(i+1==numThreads){
+                threadUsersId = new UUID[numUsers-assignedUsers];
+                threadWorkspaceId = new UUID[numUsers-assignedUsers];
+                threadDevicesId = new UUID[numUsers-assignedUsers];
+                
+                System.arraycopy( usersId, assignedUsers, threadUsersId, 0, numUsers-assignedUsers);
+                System.arraycopy( workspacesId, assignedUsers, threadWorkspaceId, 0, numUsers-assignedUsers);
+                System.arraycopy( devicesId, assignedUsers, threadDevicesId, 0, numUsers-assignedUsers);
+            } else {
+                threadUsersId = new UUID[numUsers/numThreads];
+                threadWorkspaceId = new UUID[numUsers/numThreads];
+                threadDevicesId = new UUID[numUsers/numThreads];
+                assignedUsers += numUsers/numThreads;
+                
+                System.arraycopy( usersId, assignedUsers, threadUsersId, 0, numUsers/numThreads);
+                System.arraycopy( workspacesId, assignedUsers, threadWorkspaceId, 0, numUsers/numThreads);
+                System.arraycopy( devicesId, assignedUsers, threadDevicesId, 0, numUsers/numThreads);
+            }
+            
+            threads[i] = new ClientDummyThreads(commitsPerThread, threadUsersId, threadWorkspaceId, threadDevicesId, broker.lookup(Config.getProperties().getProperty("omq.queueName")+Integer.toString(i), ISyncService.class), logger);
             threads[i].start();
         }
 
@@ -114,7 +142,7 @@ public class WorkloadGenerator {
         int numThreads = Integer.parseInt(args[0]);
         int numUsers = Integer.parseInt(args[1]);
         int totalCommits = Integer.parseInt(args[2]);
-        Config.loadProperties("../config.properties");
+        Config.loadProperties("./config.properties");
         Broker broker = new Broker(Config.getProperties());
 
         WorkloadGenerator client = new WorkloadGenerator(broker, numUsers);

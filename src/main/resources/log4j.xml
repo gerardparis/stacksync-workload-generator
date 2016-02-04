@@ -24,7 +24,7 @@
 	</appender>
 
         <appender name="file" class="org.apache.log4j.FileAppender">
-                <param name="file" value="./stacksync-server.log" />
+                <param name="file" value="./worloadgenerator.log" />
             <param name="append" value="false" />
             <param name="threshold" value="debug" />
             <layout class="org.apache.log4j.PatternLayout">
@@ -35,11 +35,11 @@
 	<appender class="org.apache.log4j.rolling.RollingFileAppender"
 		name="A2">
 		<param value="true" name="append" />
-		<param value="/var/log/stacksync-server/stacksync-server.log"
+		<param value="/var/log/stacksync-server/worloadgenerator.log"
 			name="File" />
 
 		<rollingPolicy class="org.apache.log4j.rolling.FixedWindowRollingPolicy">
-			<param name="fileNamePattern" value="/var/log/stacksync-server/stacksync-server.%i.log" />
+			<param name="fileNamePattern" value="/var/log/stacksync-server/worloadgenerator.%i.log" />
 			<param name="MinIndex" value="0" />
 			<param name="MaxIndex" value="3" />
 		</rollingPolicy>
