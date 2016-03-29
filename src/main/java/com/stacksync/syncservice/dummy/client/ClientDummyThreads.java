@@ -26,11 +26,11 @@ import org.apache.log4j.Logger;
  */
 public class ClientDummyThreads extends Thread {
 
-    private int totalCommits;//commitsPerSecond, minutes;
-    private UUID[] usersId;
-    private UUID[] workspacesId;
-    private UUID[] devicesId;
-    private ISyncService syncService;
+    protected int totalCommits;//commitsPerSecond, minutes;
+    protected UUID[] usersId;
+    protected UUID[] workspacesId;
+    protected UUID[] devicesId;
+    protected ISyncService syncService;
     protected final Logger logger;
 
     public ClientDummyThreads(int totalCommits, UUID[] users, UUID[] workspaces, UUID[] devices, ISyncService syncService, Logger logger) {
@@ -68,29 +68,29 @@ public class ClientDummyThreads extends Thread {
 
     }
 
-    private ItemMetadata createItemMetadata(Random ran, int min, int max,
+    protected ItemMetadata createItemMetadata(Random ran, int min, int max,
 	    UUID deviceId) {
 	String[] mimes = {"pdf", "php", "java", "docx", "html", "png", "jpeg", "xml"};
 
-	Long id = null;
+	UUID id = null;
 	Long version = 1L;
 
-	Long parentId = null;
-	Long parentVersion = null;
+	UUID parentId = null;
+	Long parentVersion = 0L;
 
 	String status = "NEW";
 	Date modifiedAt = new Date();
 	Long checksum = (long) ran.nextInt(Integer.MAX_VALUE);
 	List<String> chunks = new ArrayList<String>();
 	Boolean isFolder = false;
-	String filename = java.util.UUID.randomUUID().toString();
+	String filename = UUID.randomUUID().toString();
 	String mimetype = mimes[ran.nextInt(mimes.length)];
 
 	// Fill chunks
 	int numChunks = ran.nextInt((max - min) + 1) + min;
 	long size = numChunks * CHUNK_SIZE;
 	for (int i = 0; i < numChunks; i++) {
-	    String str = java.util.UUID.randomUUID().toString();
+	    String str = UUID.randomUUID().toString();
 	    try {
 		chunks.add(doHash(str));
 	    } catch (UnsupportedEncodingException e) {
@@ -99,16 +99,18 @@ public class ClientDummyThreads extends Thread {
 		e.printStackTrace();
 	    }
 	}
+        
+        UUID randomId = UUID.randomUUID();
 
-	ItemMetadata itemMetadata = new ItemMetadata(id, version, deviceId, parentId, parentVersion, status, modifiedAt, checksum, size, isFolder, filename, mimetype, chunks);
+	ItemMetadata itemMetadata = new ItemMetadata(randomId, version, deviceId, parentId, parentVersion, status, modifiedAt, checksum, size, isFolder, filename, mimetype, chunks);
 	itemMetadata.setChunks(chunks);
 	//itemMetadata.setTempId((long) ran.nextLong());
-	itemMetadata.setId(ran.nextLong());
+	//itemMetadata.setId(UUID.randomUUID());
 
 	return itemMetadata;
     }
 
-    private String doHash(String str) throws UnsupportedEncodingException,
+    protected String doHash(String str) throws UnsupportedEncodingException,
 	    NoSuchAlgorithmException {
 
 	MessageDigest crypt = MessageDigest.getInstance("SHA-1");

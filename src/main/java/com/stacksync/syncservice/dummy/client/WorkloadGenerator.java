@@ -34,8 +34,14 @@ public class WorkloadGenerator {
     private UUID[] devicesId;
     private Broker broker;
     private ClientDummyThreads[] threads;
+    
+    private String kindOfClient = "random";
 
-    public WorkloadGenerator(Broker broker, int numUsers) throws SQLException,
+    public WorkloadGenerator(Broker broker, int numUsers) throws SQLException, AlreadyBoundException, omq.exception.AlreadyBoundException, RemoteException{
+        this(broker, numUsers, "random");
+    }
+    
+    public WorkloadGenerator(Broker broker, int numUsers, String kindOfClient) throws SQLException,
             AlreadyBoundException, omq.exception.AlreadyBoundException, RemoteException {
         this.broker = broker;
 
@@ -43,7 +49,14 @@ public class WorkloadGenerator {
         workspacesId = new UUID[numUsers];
         devicesId = new UUID[numUsers];
         
-        syncService = broker.lookup(Config.getProperties().getProperty("omq.queueName")+0, ISyncService.class);
+        this.kindOfClient= kindOfClient;
+        
+        if(kindOfClient.equals("random_separated_queues") || kindOfClient.equals("no_conflict_separated_queues")){
+            syncService = broker.lookup(Config.getProperties().getProperty("omq.queueName")+0, ISyncService.class);
+        } else {
+            syncService = broker.lookup("ISyncService", ISyncService.class);   
+        }
+        
         for (int i = 0; i < numUsers; i++) {
             Properties env = broker.getEnvironment();
             String syncServerExchange = env.getProperty(ParameterQueue.RPC_EXCHANGE, "rpc_global_exchange");
@@ -70,7 +83,7 @@ public class WorkloadGenerator {
         
         for (int i = 0; i < threads.length; i++) {
             
-            System.out.println(Config.getProperties().getProperty("omq.queueName")+Integer.toString(i));
+            //System.out.println(Config.getProperties().getProperty("omq.queueName")+Integer.toString(i));
             
             UUID[] threadUsersId;
             UUID[] threadWorkspaceId;
@@ -95,7 +108,15 @@ public class WorkloadGenerator {
                 System.arraycopy( devicesId, assignedUsers, threadDevicesId, 0, numUsers/numThreads);
             }
             
-            threads[i] = new ClientDummyThreads(commitsPerThread, threadUsersId, threadWorkspaceId, threadDevicesId, broker.lookup(Config.getProperties().getProperty("omq.queueName")+Integer.toString(i), ISyncService.class), logger);
+            if(kindOfClient.equals("random")){
+                threads[i] = new ClientDummyThreads(commitsPerThread, threadUsersId, threadWorkspaceId, threadDevicesId, broker.lookup("ISyncService", ISyncService.class), logger);
+            } else if(kindOfClient.equals("no_conflict")){
+                threads[i] = new ClientDummyThreadsNoConflict(commitsPerThread, threadUsersId, threadWorkspaceId, threadDevicesId, broker.lookup("ISyncService", ISyncService.class), logger);
+            } else if(kindOfClient.equals("random_separated_queues")){
+                threads[i] = new ClientDummyThreads(commitsPerThread, threadUsersId, threadWorkspaceId, threadDevicesId, broker.lookup(Config.getProperties().getProperty("omq.queueName")+Integer.toString(i), ISyncService.class), logger); 
+            } else if(kindOfClient.equals("no_conflict_separated_queues")){
+                threads[i] = new ClientDummyThreadsNoConflict(commitsPerThread, threadUsersId, threadWorkspaceId, threadDevicesId, broker.lookup(Config.getProperties().getProperty("omq.queueName")+Integer.toString(i), ISyncService.class), logger); 
+            }
             threads[i].start();
         }
 
@@ -132,20 +153,31 @@ public class WorkloadGenerator {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 3) {
+        /*if (args.length != 3) {
             System.err.println("Usage: numThreads numUsers totalCommits");//("Usage: commitsPerSecond numUsers minutes threads");
             System.exit(0);
-        }
+        }*/
 
         //int commitsPerSecond = Integer.parseInt(args[0]);
         //int minutes = Integer.parseInt(args[2]);
         int numThreads = Integer.parseInt(args[0]);
         int numUsers = Integer.parseInt(args[1]);
         int totalCommits = Integer.parseInt(args[2]);
+        
         Config.loadProperties("./config.properties");
         Broker broker = new Broker(Config.getProperties());
+        
+        if(args.length > 3){
+            System.out.println("Type of client: " + args[3] );
+            String kindOfClient = args[3];
+            WorkloadGenerator client = new WorkloadGenerator(broker, numUsers, kindOfClient);
+            client.startExperiment(numThreads, numUsers, totalCommits / numThreads);
+        } else {
+            WorkloadGenerator client = new WorkloadGenerator(broker, numUsers);
+            client.startExperiment(numThreads, numUsers, totalCommits / numThreads);
+        }
 
-        WorkloadGenerator client = new WorkloadGenerator(broker, numUsers);
-        client.startExperiment(numThreads, numUsers, totalCommits / numThreads);
+
+
     }
 }
